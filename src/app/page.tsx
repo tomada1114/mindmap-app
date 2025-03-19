@@ -1,16 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MindMap from "../components/MindMap";
 import { NodeData } from "../types/types";
 
+// localStorageのキー名を定数として定義
+const STORAGE_KEY = "mindmap-data";
+
 export default function Home() {
-  // Initial mind map data with a root node
+  // マインドマップのデータを保持するための状態
   const [rootNode, setRootNode] = useState<NodeData>({
     id: "root",
     text: "Main Topic",
     children: [],
   });
+
+  // コンポーネントのマウント時にlocalStorageからデータを読み込む
+  useEffect(() => {
+    // ブラウザ環境でのみ実行（Next.jsのSSR対策）
+    if (typeof window !== "undefined") {
+      try {
+        // localStorageからデータを取得
+        const savedData = localStorage.getItem(STORAGE_KEY);
+
+        // データが存在する場合は、JSONとしてパースして状態を更新
+        if (savedData) {
+          const parsedData = JSON.parse(savedData) as NodeData;
+          setRootNode(parsedData);
+        }
+      } catch (error) {
+        // エラーが発生した場合はコンソールに出力（データの破損など）
+        console.error("マインドマップデータの読み込みに失敗しました:", error);
+      }
+    }
+  }, []); // 空の依存配列で、コンポーネントのマウント時に一度だけ実行
+
+  // rootNodeが変更されたときにlocalStorageに保存する
+  useEffect(() => {
+    // ブラウザ環境でのみ実行（Next.jsのSSR対策）
+    if (typeof window !== "undefined") {
+      try {
+        // オブジェクトをJSON文字列に変換してlocalStorageに保存
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(rootNode));
+      } catch (error) {
+        // エラーが発生した場合はコンソールに出力
+        console.error("マインドマップデータの保存に失敗しました:", error);
+      }
+    }
+  }, [rootNode]); // rootNodeが変更されるたびに実行
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 bg-gray-50 dark:bg-gray-900">
